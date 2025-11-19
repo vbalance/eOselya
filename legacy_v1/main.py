@@ -10,6 +10,8 @@ If no config file is provided, uses default parameters.
 import sys
 from pathlib import Path
 from datetime import datetime
+import json
+import yaml
 
 from config import ModelParameters, load_from_json, load_from_yaml
 from schedule import build_credit_schedule, build_all_scenarios_rent_schedule
@@ -157,13 +159,26 @@ def main():
         config_path = sys.argv[1]
         print(f"Loading configuration from: {config_path}")
 
-        # Detect file type
-        if config_path.endswith('.json'):
-            params = load_from_json(config_path)
-        elif config_path.endswith(('.yaml', '.yml')):
-            params = load_from_yaml(config_path)
-        else:
-            print("ERROR: Config file must be .json or .yaml/.yml")
+        try:
+            # Detect file type
+            if config_path.endswith('.json'):
+                params = load_from_json(config_path)
+            elif config_path.endswith(('.yaml', '.yml')):
+                params = load_from_yaml(config_path)
+            else:
+                print("ERROR: Config file must be .json or .yaml/.yml")
+                sys.exit(1)
+        except json.JSONDecodeError as e:
+            print(f"ERROR: Invalid JSON in config file: {e}")
+            sys.exit(1)
+        except yaml.YAMLError as e:
+            print(f"ERROR: Invalid YAML in config file: {e}")
+            sys.exit(1)
+        except TypeError as e:
+            print(f"ERROR: Missing or invalid parameters in config file: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"ERROR: Failed to load config file: {e}")
             sys.exit(1)
     else:
         print("No config file provided, using default parameters")
